@@ -1,62 +1,46 @@
-from __future__ import print_function
-
+import warnings
+warnings.filterwarnings("ignore")
 import os
-import numpy as np
-import pandas as pd
-import tarfile
-import urllib.request
-import zipfile
 from glob import glob
+import argparse
+from dask.distributed import Client,LocalCluster
+import dask
+from solvers import XgbSolver,XgbDaskSolver
 
-data_dir = 'data'
+def parse_args():
+    parser = argparse.ArgumentParser(description='nycflights')
+    parser.add_argument('-d','--data_dir', type=str, default='/ksozykinraid/data/nycflights',
+                    help='where nycflights stored')
+    parser.add_argument('-t','--tmp_dir', type=str, default='/ksozykinraid/tmp/',
+                    help='temp dir for joblib and dask')
+    parser.add_argument('-b','--backend', type=str, default='pandas',
+                    help='backend for model and dataframe processor')
+    parser.add_argument('-m','--memory_limit', type=str, default='2GB',
+                    help='memory_limit')
+    parser.add_argument('-j','--n_jobs', type=int, default=4,
+                    help='num of jobs')
+    parser.add_argument('-jt','--threads_per_worker', type=int, default=2,
+                    help='num of jobs')
+    return parser.parse_args()
 
-
-def flights():
-    flights_raw = os.path.join(data_dir, 'nycflights.tar.gz')
-    flightdir = os.path.join(data_dir, 'nycflights')
-    jsondir = os.path.join(data_dir, 'flightjson')
-
-    if not os.path.exists(data_dir):
-        os.mkdir(data_dir)
-
-    if not os.path.exists(flights_raw):
-        print("- Downloading NYC Flights dataset... ", end='', flush=True)
-        url = "https://storage.googleapis.com/dask-tutorial-data/nycflights.tar.gz"
-        urllib.request.urlretrieve(url, flights_raw)
-        print("done", flush=True)
-
-    if not os.path.exists(flightdir):
-        print("- Extracting flight data... ", end='', flush=True)
-        tar_path = os.path.join('data', 'nycflights.tar.gz')
-        with tarfile.open(tar_path, mode='r:gz') as flights:
-            flights.extractall('data/')
-        print("done", flush=True)
-
-    if not os.path.exists(jsondir):
-        print("- Creating json data... ", end='', flush=True)
-        os.mkdir(jsondir)
-        for path in glob(os.path.join('data', 'nycflights', '*.csv')):
-            prefix = os.path.splitext(os.path.basename(path))[0]
-            # Just take the first 10000 rows for the demo
-            df = pd.read_csv(path).iloc[:10000]
-            df.to_json(os.path.join('data', 'flightjson', prefix + '.json'),
-                       orient='records', lines=True)
-        print("done", flush=True)
-
-    print("** Finished! **")
-
-
-
-def main():
-    print("Setting up data directory")
-    print("-------------------------")
-
-    flights()
-    random_array()
-    weather()
-
-    print('Finished!')
-
-
+    
 if __name__ == '__main__':
-    main()
+    
+    args = parse_args()
+    data_dir = args.data_dir
+    tmp_dir =  args.tmp_dir 
+    n_jobs = args.n_jobs
+    threads_per_worker = args.threads_per_worker
+    memory_limit = args.memory_limit
+    dask.config.set({'temporary_directory': tmp_dir})
+    os.environ['JOBLIB_TEMP_FOLDER'] = tmp_dir 
+    cluster = LocalCluster(threads_per_worker=threads_per_worker, n_workers=n_jobs,memory_limit=memory_limit)
+    client = Client(cluster)
+    print('pandas + sklearn based solution')
+    pd_solver = XgbSolver(n_jobs=n_jobs,data_dir=data_dir)
+    pd_solver.solve()
+    print(pd_solver.info())
+    print('dask based solution')
+    dask_solver = XgbDaskSolver(n_jobs=n_jobs,data_dir=data_dir)
+    dask_solver.solve()
+    print(dask_solver.info())
