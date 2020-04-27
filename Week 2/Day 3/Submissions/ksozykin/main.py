@@ -36,11 +36,9 @@ if __name__ == '__main__':
     os.environ['JOBLIB_TEMP_FOLDER'] = tmp_dir 
     cluster = LocalCluster(threads_per_worker=threads_per_worker, n_workers=n_jobs,memory_limit=memory_limit)
     client = Client(cluster)
-    print('pandas + sklearn based solution')
     pd_solver = XgbSolver(n_jobs=n_jobs,data_dir=data_dir)
     pd_solver.solve()
     print(pd_solver.info())
-    print('dask based solution')
     dask_solver = XgbDaskSolver(n_jobs=n_jobs,data_dir=data_dir)
     dask_solver.solve()
     print(dask_solver.info())

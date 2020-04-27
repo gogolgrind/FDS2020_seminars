@@ -21,7 +21,7 @@ class BaseSolver(AbcSolver):
     def set_const(self,
                    data_dir,
                    max_years,
-                   seed,test_size,n_jobs,do_cv):
+                   seed,test_size,n_jobs,do_cv,verbose):
         self.unique_cities = ['ABE', 'ALB', 'ATL', 'BDL', 'BOS', 'BTV', 'BUF', 'BWI', 'CAE',
            'CHO', 'CHS', 'CLE', 'CLT', 'CMH', 'CRW', 'CVG', 'DAB', 'DAY',
            'DCA', 'DEN', 'DFW', 'DTW', 'EWR', 'FLL', 'GSO', 'GSP', 'HOU',
@@ -42,7 +42,8 @@ class BaseSolver(AbcSolver):
                                'ArrTime', 'CRSArrTime', 'FlightNum', 'ActualElapsedTime',
                                'CRSElapsedTime', 'AirTime', 'DepDelay', 'Distance', 'Cancelled',
                                'Diverted']
-        self.do_cv = do_cv 
+        self.do_cv = do_cv
+        self.verbose = verbose
         
     
     @dask.delayed
@@ -102,6 +103,8 @@ class BaseSolver(AbcSolver):
         return ((self.y_test-y_pred)**2).mean(0)
     
     def solve(self):
+        if self.verbose:
+            print("{} based solution".format(self.backend_name))
         self.parse()
         if self.do_cv:
             self.cv()
