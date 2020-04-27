@@ -21,7 +21,7 @@ class BaseSolver(AbcSolver):
     def set_const(self,
                    data_dir,
                    max_years,
-                   seed,test_size,n_jobs):
+                   seed,test_size,n_jobs,do_cv):
         self.unique_cities = ['ABE', 'ALB', 'ATL', 'BDL', 'BOS', 'BTV', 'BUF', 'BWI', 'CAE',
            'CHO', 'CHS', 'CLE', 'CLT', 'CMH', 'CRW', 'CVG', 'DAB', 'DAY',
            'DCA', 'DEN', 'DFW', 'DTW', 'EWR', 'FLL', 'GSO', 'GSP', 'HOU',
@@ -42,7 +42,7 @@ class BaseSolver(AbcSolver):
                                'ArrTime', 'CRSArrTime', 'FlightNum', 'ActualElapsedTime',
                                'CRSElapsedTime', 'AirTime', 'DepDelay', 'Distance', 'Cancelled',
                                'Diverted']
-        self.do_cv = True
+        self.do_cv = do_cv 
         
     
     @dask.delayed
@@ -82,11 +82,14 @@ class BaseSolver(AbcSolver):
         
         
     def cv(self):
-        grid_search = GridSearchCV(self.model, self.param_grid,
+        gcv = GridSearchCV(self.model, self.param_grid,
                                    cv=3, n_jobs=1)
+        start = time.time()
         with joblib.parallel_backend("dask"):
-            grid_search.fit(self.X_val, self.y_val)
-        self.model = self.model.__class__(**grid_search.best_params_)
+            gcv.fit(self.X_val, self.y_val)
+        stop = time.time()
+        self._info['CV_TIME'] = stop - start
+        self.model = self.model.__class__(**gcv.best_params_)
             
     def info(self):
         return self._info
@@ -102,6 +105,8 @@ class BaseSolver(AbcSolver):
         self.parse()
         if self.do_cv:
             self.cv()
+        else:
+            self._info['CV_TIME'] = '-1'
         self.train()
         test_mse = self.test()
         if self.backend_name == 'dask':

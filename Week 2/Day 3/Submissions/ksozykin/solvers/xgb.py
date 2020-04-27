@@ -10,9 +10,10 @@ class XgbSolver(BaseSolver):
                       seed = 42,
                       test_size = 0.25,
                       data_dir = '/ksozykinraid/data/nycflights',
-                      n_jobs = 4):
+                      n_jobs = 4,
+                      do_cv = True):
         
-        self.set_const(data_dir,max_years,seed,test_size,n_jobs)
+        self.set_const(data_dir,max_years,seed,test_size,n_jobs,do_cv)
         self.model = xgboost.XGBRegressor(max_depth=6,n_estimators=500,
                                           reg_lambda=10,n_jobs=self.n_jobs)
         self.backend_name = 'pandas'
@@ -30,9 +31,10 @@ class XgbDaskSolver(BaseSolver):
                       seed = 42,
                       test_size = 0.25,
                       data_dir = '/ksozykinraid/data/nycflights',
-                      n_jobs = 4):
+                      n_jobs = 4,
+                      do_cv = False):
         
-        self.set_const(data_dir,max_years,seed,test_size,n_jobs)
+        self.set_const(data_dir,max_years,seed,test_size,n_jobs,do_cv)
         self.model = dxgboost.XGBRegressor(max_depth=6,n_estimators=500,
                                           reg_lambda=10,n_jobs=self.n_jobs)
         self.backend = dpd
