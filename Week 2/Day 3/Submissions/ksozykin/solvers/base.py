@@ -37,10 +37,10 @@ class BaseSolver(AbcSolver):
         self.n_jobs = n_jobs
         self.max_years = max_years
         self._info = {}
-        self.target_column  = 'ArrDelay'
+        self.target_column  = 'DepDelay'
         self.feature_colums = ['Year', 'Month', 'DayofMonth', 'DayOfWeek', 'DepTime', 'CRSDepTime',
                                'ArrTime', 'CRSArrTime', 'FlightNum', 'ActualElapsedTime',
-                               'CRSElapsedTime', 'AirTime', 'DepDelay', 'Distance', 'Cancelled',
+                               'CRSElapsedTime', 'AirTime', 'ArrDelay', 'Distance', 'Cancelled',
                                'Diverted']
         self.do_cv = do_cv
         self.verbose = verbose
